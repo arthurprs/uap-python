@@ -31,6 +31,9 @@ DATA_DIR = os.path.abspath(os.path.join(ROOT_DIR, '..', 'data'))
 regex_dir = ROOT_DIR if os.path.exists(os.path.join(ROOT_DIR, 'regexes.yaml')) else DATA_DIR
 
 
+RE_REPLACEMENT = re.compile(r'\$1')
+
+
 class UserAgentParser(object):
     def __init__(self, pattern, family_replacement=None, v1_replacement=None, v2_replacement=None):
         """Initialize UserAgentParser.
@@ -60,8 +63,8 @@ class UserAgentParser(object):
         match = self.user_agent_re.search(user_agent_string)
         if match:
             if self.family_replacement:
-                if re.search(r'\$1', self.family_replacement):
-                    family = re.sub(r'\$1', match.group(1), self.family_replacement)
+                if RE_REPLACEMENT.search(self.family_replacement):
+                    family = RE_REPLACEMENT.sub(match.group(1), self.family_replacement)
                 else:
                     family = self.family_replacement
             else:
@@ -112,8 +115,8 @@ class OSParser(object):
         match = self.user_agent_re.search(user_agent_string)
         if match:
             if self.os_replacement:
-                if re.search(r'\$1', self.os_replacement):
-                    os = re.sub(r'\$1', match.group(1), self.os_replacement)
+                if RE_REPLACEMENT.search(self.os_replacement):
+                    os = RE_REPLACEMENT.sub(match.group(1), self.os_replacement)
                 else:
                     os = self.os_replacement
             elif match.lastindex:
@@ -138,6 +141,9 @@ class OSParser(object):
 
 
 class DeviceParser(object):
+    RE_MULTIREPLACE1 = re.compile(r'\$(\d)')
+    RE_MULTIREPLACE2 = re.compile(r'^\s+|\s+$')
+
     def __init__(self, pattern, regex_flag=None, device_replacement=None, brand_replacement=None, model_replacement=None):
         """Initialize UserAgentParser.
 
@@ -170,8 +176,8 @@ class DeviceParser(object):
             return group[index]
           return ''
 
-        _string = re.sub(r'\$(\d)', _repl, string)
-        _string = re.sub(r'^\s+|\s+$', '', _string)
+        _string = self.RE_MULTIREPLACE1.sub(_repl, string)
+        _string = self.RE_MULTIREPLACE2.sub('', _string)
         if _string == '':
             return None
         return _string
